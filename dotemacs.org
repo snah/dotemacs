@@ -19,7 +19,7 @@
 #+begin_src emacs-lisp
 (org-dotemacs-load-file nil local-dotemacs-file)
 #+end_src
-* Apearance
+* Appearance
   Set up default theme:
 #+begin_src emacs-lisp
 (load-theme 'tango-dark)
@@ -28,6 +28,36 @@
   Start maximized:
 #+begin_src emacs-lisp
 (add-to-list 'default-frame-alist '(fullscreen . maximized))
+#+end_src
+
+  Disable UI stuff:
+#+begin_src emacs-lisp
+  (menu-bar-mode 0)
+  (tool-bar-mode 0)
+  (scroll-bar-mode 0)
+#+end_src
+
+  Show line numbers
+#+begin_src emacs-lisp
+  (global-linum-mode 1)
+#+end_src
+
+  Show more in the modeline
+#+begin_src emacs-lisp
+  (column-number-mode 1)
+#+end_src
+** Code related
+   Better parentesis display
+#+begin_src emacs-lisp
+  (setq blink-matching-paren nil)
+  (show-paren-mode t)
+  (setq show-paren-delay 0)
+#+end_src
+* Behaviour
+  Region selection:
+#+begin_src emacs-lisp
+  (use-package expand-region
+    :ensure t)
 #+end_src
 * Evil mode
 
@@ -56,6 +86,9 @@
 #+begin_src emacs-lisp
 (setq org-src-tab-acts-natively t)
 #+end_src
+* Winner mode
+#+begin_src emacs-lisp
+#+end_src
 * Custom packages
 #+begin_src emacs-lisp
 (if (bound-and-true-p load-dm-tools)
@@ -69,9 +102,12 @@
     (shell-command "make"))
 
   ;; Key bindings
-  (evil-global-set-key 'normal "\\g" 'magit-status)
   (evil-global-set-key 'normal "\\e" 'eval-buffer)
+  (evil-global-set-key 'normal "\\g" 'magit-status)
   (evil-global-set-key 'normal "\\m" 'run-make)
+  (evil-global-set-key 'normal "\\o" 'other-window)
+
+  (global-set-key (kbd "C-=") 'er/expand-region)
 #+end_src 
 ** Org mode
 
@@ -86,3 +122,6 @@
   (evil-global-set-key 'normal "\\be" 'insert-elisp-block)
   (evil-global-set-key 'insert "\\be" 'insert-elisp-block)
 #+end_src
+* todos
+  - History
+  - Use Helm/IDO/ivy
