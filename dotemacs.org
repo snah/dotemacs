@@ -1,0 +1,88 @@
+#+TITLE: Main Emacs configuration file
+
+[[~/.localemacs.d/dotemacs.org][local config]]
+
+* Local configuration
+  File paths
+#+begin_src emacs-lisp
+  (setq local-dotemacs-file "~/.localemacs.d/dotemacs.org")
+  (setq local-dotemacs-template-file "~/.emacs.d/local_template.org")
+#+end_src
+  If no local config exists, create from template
+#+begin_src emacs-lisp
+  (unless (file-exists-p (file-name-directory local-dotemacs-file))
+    (make-directory (file-name-directory local-dotemacs-file)))
+  (unless (file-exists-p local-dotemacs-file)
+    (copy-file local-dotemacs-template-file local-dotemacs-file)))
+#+end_src
+  Load local configuration
+#+begin_src emacs-lisp
+(org-dotemacs-load-file nil local-dotemacs-file)
+#+end_src
+* Apearance
+  Set up default theme:
+#+begin_src emacs-lisp
+(load-theme 'tango-dark)
+#+end_src
+
+  Start maximized:
+#+begin_src emacs-lisp
+(add-to-list 'default-frame-alist '(fullscreen . maximized))
+#+end_src
+* Evil mode
+
+#+begin_src emacs-lisp
+  (use-package evil
+    :ensure t
+    :config (evil-mode 1))
+#+end_src
+
+** Additions
+   <<evil-mode/additions>>
+#+begin_src emacs-lisp
+(use-package evil-magit
+  :ensure t)
+#+end_src
+
+* Magit
+#+begin_src emacs-lisp
+(use-package magit
+  :ensure -t)
+#+end_src
+  evil-magit is loaded in [[evil-mode/additions]]
+
+* Org mode
+  Make tabs behave right in src blocks:
+#+begin_src emacs-lisp
+(setq org-src-tab-acts-natively t)
+#+end_src
+* Custom packages
+#+begin_src emacs-lisp
+(if (bound-and-true-p load-dm-tools)
+  (load "~/.emacs.d/pkg-gm-tools/gm-tools.el"))
+#+end_src
+* Key bindings
+** Generic
+#+begin_src emacs-lisp
+  (defun run-make ()
+    (interactive)
+    (shell-command "make"))
+
+  ;; Key bindings
+  (evil-global-set-key 'normal "\\g" 'magit-status)
+  (evil-global-set-key 'normal "\\e" 'eval-buffer)
+  (evil-global-set-key 'normal "\\m" 'run-make)
+#+end_src 
+** Org mode
+
+#+begin_src emacs-lisp
+  (defun insert-elisp-block ()
+    (interactive)
+    (insert "#+begin_src emacs-lisp\n")
+    (let ((cursor (point)))
+	 (progn (insert "#+end_src")
+		(goto-char cursor))))
+
+  (evil-global-set-key 'normal "\\be" 'insert-elisp-block)
+  (evil-global-set-key 'insert "\\be" 'insert-elisp-block)
+#+end_src
