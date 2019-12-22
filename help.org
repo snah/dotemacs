@@ -1,0 +1,25 @@
+#+TITLE: Emacs help file
+
+* Generic
+  
+** Bindings
+   | C-q | fill paragraph |
+* Org mode
+** Bindings
+   | M-RET   | insert heading                   |
+   | C-RET   | insert heading at end of subtree |
+   | M-S-RET | insert TODO                      |
+   | M-C-RET | insert TODO at end of subtree    |
+   | C-c @   | select subtree                   |
+   | C-c /   | sparse tree mode                 |
+** functions
+   | org-table-convert-region |
+* Dired
+** Bindings
+   | a       | open in current buffer |
+   | m       | mark                   |
+   | u       | unmark                 |
+   | %m      | mark with regexp       |
+   | C_x C-q | rename inline          |
+   | +       | new directory         |
+* Elisp

@@ -2,6 +2,12 @@
 
 [[~/.localemacs.d/dotemacs.org][local config]]
 
+* Definitions
+** Paths
+#+begin_src emacs-lisp
+  (defvar help-file "~/.emacs.d/help.org")
+  (defvar dot-file "~/.emacs.d/dotemacs.org")
+#+end_src
 * Local configuration
   File paths
 #+begin_src emacs-lisp
@@ -22,12 +28,17 @@
 * Appearance
   Set up default theme:
 #+begin_src emacs-lisp
-(load-theme 'tango-dark)
+  (load-theme 'tango-dark)
 #+end_src
 
   Start maximized:
 #+begin_src emacs-lisp
-(add-to-list 'default-frame-alist '(fullscreen . maximized))
+  (add-to-list 'default-frame-alist '(fullscreen . maximized))
+#+end_src
+
+  Other startup stuff
+#+begin_src emacs-lisp
+  (setq inhibit-startup-message t)
 #+end_src
 
   Disable UI stuff:
@@ -54,74 +65,168 @@
   (setq show-paren-delay 0)
 #+end_src
 * Behaviour
+  Show the home folder on startup:
+#+begin_src emacs-lisp
+  (setq initial-buffer-choice "~")
+#+end_src
+* Packages
+** Evil mode
+
+ #+begin_src emacs-lisp
+   (use-package evil
+     :ensure t
+     :config (evil-mode 1))
+ #+end_src
+
+*** Additions
+    <<evil-mode/additions>>
+ #+begin_src emacs-lisp
+ (use-package evil-magit
+   :ensure t)
+ #+end_src
+
+** Magit
+ #+begin_src emacs-lisp
+ (use-package magit
+   :ensure t)
+ #+end_src
+   evil-magit is loaded in [[evil-mode/additions]]
+
+** Org mode
+   Make tabs behave right in src blocks:
+ #+begin_src emacs-lisp
+ (setq org-src-tab-acts-natively t)
+ #+end_src
+** Diminish
+   Hide modes from the list
+#+begin_src emacs-lisp
+  (use-package diminish
+    :ensure t)
+#+end_src
+** Winner mode
+ #+begin_src emacs-lisp
+   (use-package winner
+     :ensure t
+     :init (winner-mode))
+ #+end_src
+** flycheck
+#+begin_src emacs-lisp
+  (use-package flycheck
+    :ensure t
+    :init
+    (global-flycheck-mode t))
+#+end_src
+** Regular expressions
+#+begin_src emacs-lisp
+  (use-package pcre2el
+    :ensure t
+    :config (pcre-mode))
+#+end_src
+** Auto complete
+#+begin_src emacs-lisp
+  (use-package auto-complete
+    :ensure t
+    :init
+    (ac-config-default)
+    (global-auto-complete-mode t))
+#+end_src
+** Aggressive indent mode
+#+begin_src emacs-lisp
+  (use-package aggressive-indent
+    :ensure t
+    :config (global-aggressive-indent-mode t))
+#+end_src
+** Expand region
   Region selection:
 #+begin_src emacs-lisp
   (use-package expand-region
     :ensure t)
 #+end_src
-* Evil mode
-
-#+begin_src emacs-lisp
-  (use-package evil
-    :ensure t
-    :config (evil-mode 1))
-#+end_src
-
-** Additions
-   <<evil-mode/additions>>
-#+begin_src emacs-lisp
-(use-package evil-magit
-  :ensure t)
-#+end_src
-
-* Magit
-#+begin_src emacs-lisp
-(use-package magit
-  :ensure -t)
-#+end_src
-  evil-magit is loaded in [[evil-mode/additions]]
-
-* Org mode
-  Make tabs behave right in src blocks:
-#+begin_src emacs-lisp
-(setq org-src-tab-acts-natively t)
-#+end_src
-* Winner mode
-#+begin_src emacs-lisp
-#+end_src
+** Try
+ #+begin_src emacs-lisp
+   (use-package try
+     :ensure t)
+ #+end_src
+** Which-key
+ #+begin_src emacs-lisp
+   (use-package which-key
+     :ensure t
+     :diminish which-key-mode
+     :config (which-key-mode))
+ #+end_src
+** ido mode
+ #+begin_src emacs-lisp
+   (setq ido-enable-flex-matching t)
+   (setq ido-everywhere t)
+   (ido-mode 1)
+ #+end_src(
 * Custom packages
 #+begin_src emacs-lisp
 (if (bound-and-true-p load-dm-tools)
   (load "~/.emacs.d/pkg-gm-tools/gm-tools.el"))
 #+end_src
 * Key bindings
-** Generic
+** Unmap confilcts
+   Some keymaps try to overwrite my nice config, dont let them
 #+begin_src emacs-lisp
-  (defun run-make ()
-    (interactive)
-    (shell-command "make"))
+  (define-key dired-mode-map "g" nil)
+#+end_src
+** Generic
+*** Helper functions
+ #+begin_src emacs-lisp
+   (defun run-make ()
+     (interactive)
+     (shell-command "make"))
+#+end_src
+*** Bindings
+#+begin_src emacs-lisp
+  ;; Movement
+  (evil-global-set-key 'motion "\C-e" 'evil-scroll-up)
+  (evil-global-set-key 'motion "go" 'other-window)
+  (evil-global-set-key 'motion "gp" (lambda () (interactive) (other-window -1)))
 
-  ;; Key bindings
+  ;; Selection
+  (global-set-key (kbd "C-=") 'er/expand-region)
+
+  ;; Window magement
+  (evil-global-set-key 'motion "gn" 'winner-undo)
+  (evil-global-set-key 'motion "gm" 'winner-redo)
+
+  ;; Commonly used files and buffers
+  (evil-global-set-key 'motion (kbd "<f2>") (lambda () (interactive) (find-file help-file)))
+  (evil-global-set-key 'motion (kbd "<f3>") (lambda () (interactive) (find-file dot-file)))
+
+  ;; High level
   (evil-global-set-key 'normal "\\e" 'eval-buffer)
   (evil-global-set-key 'normal "\\g" 'magit-status)
   (evil-global-set-key 'normal "\\m" 'run-make)
-  (evil-global-set-key 'normal "\\o" 'other-window)
-
-  (global-set-key (kbd "C-=") 'er/expand-region)
-#+end_src 
+ #+end_src 
 ** Org mode
-
-#+begin_src emacs-lisp
-  (defun insert-elisp-block ()
-    (interactive)
-    (insert "#+begin_src emacs-lisp\n")
-    (let ((cursor (point)))
-	 (progn (insert "#+end_src")
-		(goto-char cursor))))
-
-  (evil-global-set-key 'normal "\\be" 'insert-elisp-block)
-  (evil-global-set-key 'insert "\\be" 'insert-elisp-block)
+*** Helper functions
+ #+begin_src emacs-lisp
+   (defun insert-elisp-block ()
+     (interactive)
+     (kill-line 0)
+     (insert "#+begin_src emacs-lisp\n")
+     (insert "#+end_src")
+     (evil-open-above 1)
+     (insert "  ("))
 #+end_src
+*** Bindings
+#+begin_src emacs-lisp
+   (evil-global-set-key 'normal "\\be" 'insert-elisp-block)
+   (evil-global-set-key 'normal "gj" 'org-next-visible-heading)
+   (evil-global-set-key 'normal "gk" 'org-previous-visible-heading)
+   (evil-global-set-key 'normal "gh" 'org-backward-heading-same-level)
+   (evil-global-set-key 'normal "gl" 'org-forward-heading-same-level)
+   (evil-global-set-key 'normal "gu" 'outline-up-heading)
+ #+end_src
 * todos
-  - History
-  - Use Helm/IDO/ivy
+*** History
+*** Python
+    [[https://cestlaz.github.io/posts/using-emacs-12-python/]]
+    elpy
+*** YAsnippet
+    [[https://cestlaz.github.io/posts/using-emacs-13-yasnippet/]]
+*** Counsel FZF
+    [[https://cestlaz.github.io/posts/using-emacs-38-dired/]]

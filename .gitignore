@@ -5,3 +5,5 @@ eshell
 pkg-*
 tramp
 transient
+ac-comphist.dat
+ido.last
