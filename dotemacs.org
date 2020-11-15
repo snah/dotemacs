@@ -5,8 +5,9 @@
 * Definitions
 ** Paths
 #+begin_src emacs-lisp
-  (defvar help-file "~/.emacs.d/help.org")
   (defvar dot-file "~/.emacs.d/dotemacs.org")
+  (defvar emacs-help-file "~/share/personal/digital_life/emacs.org")
+  (defvar master-help-file "~/share/personal/")
 #+end_src
 * Local configuration
   File paths
@@ -28,7 +29,7 @@
 * Appearance
   Set up default theme:
 #+begin_src emacs-lisp
-  (load-theme 'tango-dark)
+  (load-theme 'wombat)
 #+end_src
 
   Start maximized:
@@ -48,9 +49,12 @@
   (scroll-bar-mode 0)
 #+end_src
 
-  Show line numbers
+  Show line numbers.
+  Need to do this selectivly as it causes a crash when opening pdf files.
 #+begin_src emacs-lisp
-  (global-linum-mode 1)
+  (add-hook 'prog-mode-hook 'linum-mode)
+  (add-hook 'text-mode-hook 'linum-mode)
+  (add-hook 'org-mode-hook 'linum-mode)
 #+end_src
 
   Show more in the modeline
@@ -65,9 +69,21 @@
   (setq show-paren-delay 0)
 #+end_src
 * Behaviour
+** Startup
   Show the home folder on startup:
 #+begin_src emacs-lisp
   (setq initial-buffer-choice "~")
+#+end_src
+** indentation
+   Do not use tabs for indentation in these files:
+#+begin_src emacs-lisp
+  (add-hook 'html-mode-hook
+	    (lambda () (setq indent-tabs-mode nil)))
+#+end_src
+** dired
+   Use other dired buffer as default target:
+#+begin_src emacs-lisp
+  (setq dired-dwim-target t)
 #+end_src
 * Packages
 ** Evil mode
@@ -94,9 +110,45 @@
 
 ** Org mode
    Make tabs behave right in src blocks:
- #+begin_src emacs-lisp
- (setq org-src-tab-acts-natively t)
- #+end_src
+   #+begin_src emacs-lisp
+     (setq org-src-tab-acts-natively t)
+   #+end_src
+   Setup agenda mode
+   #+begin_src emacs-lisp
+     (setq org-agenda-files (directory-files-recursively "~/share/personal/" "^[[:alnum:]].*\\.org$"))
+     (setq org-agenda-todo-list-sublevels nil)
+   #+end_src
+   Setup TODO keywords and their faces
+   #+begin_src emacs-lisp
+     (setq org-todo-keywords
+	   '((sequence "SDAY(s)" "TODO(t)" "NEXT(n)" "|" "DONE(d)" "CLND(c)")
+             (sequence "|" "WAIT(w)")
+             (sequence "|" "PRIO(p)")
+	     (sequence "NOK(b)" "|" "OK(o)")))
+     (setq org-todo-keyword-faces
+	   '(("SDAY" . "cyan")
+	     ("NEXT" . "orange")
+	     ("WAIT" . "yellow")
+	     ("PRIO" . (:foreground "red" :bold t))
+	     ("NOK" . (:foreground "red" :bold t))))
+   #+end_src
+   Setup capture templates
+   #+begin_src emacs-lisp
+     (setq org-capture-templates
+	   '(("i" "Inbox" entry (file "~/share/personal/inbox/inbox.org")
+	      "* TODO %?\n  %i\n")))
+   #+end_src
+** elpy
+#+begin_src emacs-lisp
+  (use-package elpy
+  :ensure t
+  :init
+  (elpy-enable))
+#+end_src
+  Remove highlighted indentation (clutter)
+#+begin_src emacs-lisp
+  (add-hook 'elpy-mode-hook (lambda () (highlight-indentation-mode -1)))
+#+end_src
 ** Diminish
    Hide modes from the list
 #+begin_src emacs-lisp
@@ -109,10 +161,28 @@
      :ensure t
      :init (winner-mode))
  #+end_src
+** workgroups
+   workgroups2 is not nearly as good as the original so use a local copy of workgroups
+ #+begin_src emacs-lisp
+   (add-to-list 'load-path "~/.emacs.d/manual_download")
+   (require 'workgroups)
+   (setq wg-prefix-key (kbd "C-c w"))
+   (workgroups-mode)
+   (wg-load "~/.emacs_workgroups")
+   (defun my-save-workgroups ()
+     (wg-save "~/.emacs_workgroups"))
+   (add-hook 'wg-switch-hook 'my-save-workgroups)
+ #+End_src
+** peep-dired
+ #+begin_src emacs-lisp
+   (use-package peep-dired
+     :ensure t)
+ #+end_src
 ** flycheck
 #+begin_src emacs-lisp
   (use-package flycheck
     :ensure t
+    :diminish
     :init
     (global-flycheck-mode t))
 #+end_src
@@ -154,22 +224,77 @@
      :diminish which-key-mode
      :config (which-key-mode))
  #+end_src
-** ido mode
- #+begin_src emacs-lisp
-   (setq ido-enable-flex-matching t)
-   (setq ido-everywhere t)
-   (ido-mode 1)
- #+end_src(
+** Ivy
+   #+begin_src emacs-lisp
+     (use-package ivy
+       :ensure t
+       :diminish
+       :bind (("C-s" . swiper)
+	      :map ivy-minibuffer-map
+	      ("TAB" . ivy-alt-done)	
+	      ("C-l" . ivy-alt-done)
+	      ("C-j" . ivy-next-line)
+	      ("C-k" . ivy-previous-line)
+	      :map ivy-switch-buffer-map
+	      ("C-k" . ivy-previous-line)
+	      ("C-l" . ivy-done)
+	      ("C-d" . ivy-switch-buffer-kill)
+	      :map ivy-reverse-i-search-map
+	      ("C-k" . ivy-previous-line)
+	      ("C-d" . ivy-reverse-i-search-kill))
+       :config
+       (ivy-mode 1))
+   #+end_src
+** All the icons
+   #+begin_src emacs-lisp
+     (defun aorst/font-installed-p (font-name)
+       "Check if font with FONT-NAME is available."
+       (if (find-font (font-spec :name font-name))
+	   t
+	 nil))
+     (use-package all-the-icons
+       :config
+       (when (not (aorst/font-installed-p "all-the-icons"))
+	 (all-the-icons-install-fonts t)))
+   #+end_src
+** Doom modeline
+   #+begin_src emacs-lisp
+   (use-package doom-modeline
+   :ensure t
+   :init (doom-modeline-mode 1)
+   :custom ((doom-modeline-height 10)))
+   
+   (set-face-attribute 'mode-line nil :family "Source Code Pro" :height 180)
+   (set-face-attribute 'mode-line-inactive nil :family "Source Code Pro" :height 180)
+   #+enc_src
+
 * Custom packages
+  #+begin_src emacs-lisp
+    (if (bound-and-true-p load-dm-tools)
+	(load "~/.emacs.d/pkg-gm-tools/gm-tools.el"))
+  #+end_src
+* Misc
+** Dice rolling
 #+begin_src emacs-lisp
-(if (bound-and-true-p load-dm-tools)
-  (load "~/.emacs.d/pkg-gm-tools/gm-tools.el"))
+  (defun roll (instr)
+    "Roll dice as give in INSTR."
+    (interactive "s")
+    (message "%s" instr)
+    (cond ((equal (string-trim instr) "1d6")
+	   (message "[1d6]: %d" (+ 1 (random 6))))
+	  ((equal instr "1d10")
+	   (message "[1d6]: %d" (+ 1 (random 10))))
+	  ((equal instr "1d20")
+	   (message "[1d20]: %d" (+ 1 (random 20))))
+	  ((equal instr "1d100")
+	   (message "[1d100]: %d" (+ 1 (random 100))))))
 #+end_src
 * Key bindings
 ** Unmap confilcts
    Some keymaps try to overwrite my nice config, dont let them
 #+begin_src emacs-lisp
   (define-key dired-mode-map "g" nil)
+  (define-key compilation-mode-map "g" nil)
 #+end_src
 ** Generic
 *** Helper functions
@@ -193,8 +318,11 @@
   (evil-global-set-key 'motion "gm" 'winner-redo)
 
   ;; Commonly used files and buffers
-  (evil-global-set-key 'motion (kbd "<f2>") (lambda () (interactive) (find-file help-file)))
-  (evil-global-set-key 'motion (kbd "<f3>") (lambda () (interactive) (find-file dot-file)))
+  (evil-global-set-key 'motion (kbd "<f2>") (lambda () (interactive) (find-file dot-file)))
+  (evil-global-set-key 'motion (kbd "<f3>") (lambda () (interactive) (find-file emacs-help-file)))
+  (evil-global-set-key 'motion (kbd "<f4>") (lambda () (interactive) (find-file master-help-file)))
+
+  (evil-global-set-key 'motion "gd" (lambda () (interactive) (dired nil)))
 
   ;; High level
   (evil-global-set-key 'normal "\\e" 'eval-buffer)
@@ -221,6 +349,32 @@
    (evil-global-set-key 'normal "gl" 'org-forward-heading-same-level)
    (evil-global-set-key 'normal "gu" 'outline-up-heading)
  #+end_src
+** Magit
+   There is a problem where commiting wont work properly, as a
+   workaround restore the following key mapping
+#+begin_src emacs-lisp
+  (evil-global-set-key 'normal "\C-c\C-c" 'with-editor-finish)
+#+end_src
+** peep-dired
+*** helper functions
+#+begin_src emacs-lisp
+  (defun my-peep-mark-for-deletion ()
+    (interactive)
+    (dired-flag-file-deletion 1)
+    (peep-dired-prev-file)
+    (peep-dired-next-file))
+#+end_src
+**** TODO hook to dired-mark function instead of overwriting spererate bindings
+*** bindings
+#+begin_src emacs-lisp
+  (evil-define-key 'normal peep-dired-mode-map (kbd "<SPC>") 'peep-dired-scroll-page-down
+    (kbd "C-<SPC>") 'peep-dired-scroll-page-up
+    (kbd "<backspace>") 'peep-dired-scroll-page-up
+    (kbd "j") 'peep-dired-next-file
+    (kbd "k") 'peep-dired-prev-file
+    (kbd "d") 'my-peep-mark-for-deletion)
+   (add-hook 'peep-dired-hook 'evil-normalize-keymaps)
+#+end_src
 * todos
 *** History
 *** Python
