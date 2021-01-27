@@ -7,3 +7,7 @@ tramp
 transient
 ac-comphist.dat
 ido.last
+elpy/
+exwm/
+image-dired/
+url/

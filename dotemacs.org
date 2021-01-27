@@ -26,10 +26,30 @@
 #+begin_src emacs-lisp
 (org-dotemacs-load-file nil local-dotemacs-file)
 #+end_src
+* Security
+#+begin_src emacs-lisp
+  (setq enable-local-variables nil)
+#+end_src 
 * Appearance
-  Set up default theme:
+  Set up theme with some customization:
 #+begin_src emacs-lisp
   (load-theme 'wombat)
+  (custom-theme-set-faces
+   'user
+   '(org-level-1 ((t (:foreground "#40C040" :weight bold))))
+   '(org-level-2 ((t (:foreground "#60C0B0" :weight bold))))
+   '(org-level-3 ((t (:foreground "#60D0FF"))))
+   '(org-level-4 ((t (:foreground "#5070FF"))))
+   '(org-level-5 ((t (:foreground "#B066FF"))))
+   '(org-level-6 ((t (:foreground "#D066C0"))))
+   '(org-level-7 ((t (:foreground "#D08080"))))
+   '(org-level-8 ((t (:foreground "#A04040"))))
+   '(org-list-dt ((t (:foreground "#A0D0E0" :weight bold))))
+   '(org-quote ((t (:foreground "#D8E0A0" :family "Nimbus Sans"))))
+   '(org-block-begin-line ((t (:foreground "#808040"))))
+   '(org-block-end-line ((t (:foreground "#808040"))))
+
+   '(vertical-border ((t (:foreground "#404040" :background "#000000")))))
 #+end_src
 
   Start maximized:
@@ -113,6 +133,10 @@
    #+begin_src emacs-lisp
      (setq org-src-tab-acts-natively t)
    #+end_src
+   Setup quote font faces
+   #+begin_src emacs-lisp
+   (setq org-fontify-quote-and-verse-blocks t)
+   #+end_src
    Setup agenda mode
    #+begin_src emacs-lisp
      (setq org-agenda-files (directory-files-recursively "~/share/personal/" "^[[:alnum:]].*\\.org$"))
@@ -168,6 +192,7 @@
    (require 'workgroups)
    (setq wg-prefix-key (kbd "C-c w"))
    (workgroups-mode)
+   (setq wg-morph-on nil)
    (wg-load "~/.emacs_workgroups")
    (defun my-save-workgroups ()
      (wg-save "~/.emacs_workgroups"))
@@ -224,26 +249,33 @@
      :diminish which-key-mode
      :config (which-key-mode))
  #+end_src
-** Ivy
+** Ivy and counsel
    #+begin_src emacs-lisp
      (use-package ivy
        :ensure t
        :diminish
        :bind (("C-s" . swiper)
 	      :map ivy-minibuffer-map
+	      ("<up>" . ivy-previous-history-element)
 	      ("TAB" . ivy-alt-done)	
 	      ("C-l" . ivy-alt-done)
-	      ("C-j" . ivy-next-line)
-	      ("C-k" . ivy-previous-line)
+	      ("M-j" . ivy-next-line)
+	      ("M-k" . ivy-previous-line)
 	      :map ivy-switch-buffer-map
-	      ("C-k" . ivy-previous-line)
+	      ("M-k" . ivy-previous-line)
 	      ("C-l" . ivy-done)
 	      ("C-d" . ivy-switch-buffer-kill)
 	      :map ivy-reverse-i-search-map
-	      ("C-k" . ivy-previous-line)
+	      ("M-k" . ivy-previous-line)
 	      ("C-d" . ivy-reverse-i-search-kill))
-       :config
-       (ivy-mode 1))
+       :config (ivy-mode 1))
+
+     (use-package counsel
+       :ensure t)
+
+     (use-package ivy-rich
+       :ensure t
+       :init (ivy-rich-mode 1))
    #+end_src
 ** All the icons
    #+begin_src emacs-lisp
@@ -262,12 +294,39 @@
    (use-package doom-modeline
    :ensure t
    :init (doom-modeline-mode 1)
+   :config
+   (doom-modeline-def-segment workspace-name
+   "The current workspace name."
+   (propertize (format " %s " (wg-name (wg-current-workgroup))) 'face
+   (if (doom-modeline--active)
+   'doom-modeline-buffer-major-mode
+   'mode-line-inactive)))
    :custom ((doom-modeline-height 10)))
    
    (set-face-attribute 'mode-line nil :family "Source Code Pro" :height 180)
    (set-face-attribute 'mode-line-inactive nil :family "Source Code Pro" :height 180)
    #+enc_src
 
+** Helpful
+   
+  #+begin_src emacs-lisp
+    (use-package helpful
+      :ensure t
+      :custom
+      (counsel-describe-function-function #'helpful-callable)
+      (counsel-describe-variable-function #'helpful-variable)
+      :bind
+      ([remap describe-function] . counsel-describe-function)
+      ([remap describe-command] . helpful-command)
+      ([remap describe-variable] . counsel-describe-variable)
+      ([remap describe-key] . helpful-key))
+  #+end_src
+** Rainbow mode
+   Rainbow mode is nice but do not enable by default
+#+begin_src emacs-lisp
+  (use-package rainbow-mode
+    :ensure t)
+#+end_src
 * Custom packages
   #+begin_src emacs-lisp
     (if (bound-and-true-p load-dm-tools)
@@ -293,42 +352,68 @@
 ** Unmap confilcts
    Some keymaps try to overwrite my nice config, dont let them
 #+begin_src emacs-lisp
+  (evil-global-set-key 'motion " " nil)
   (define-key dired-mode-map "g" nil)
+  (define-key dired-mode-map " " nil)
   (define-key compilation-mode-map "g" nil)
+  (define-key compilation-mode-map " " nil)
 #+end_src
 ** Generic
-*** Helper functions
+*** High level
+**** Helper functions
+  #+begin_src emacs-lisp
+    (defun run-make ()
+      (interactive)
+      (shell-command "make"))
+ #+end_src
+**** Bindings
  #+begin_src emacs-lisp
-   (defun run-make ()
-     (interactive)
-     (shell-command "make"))
-#+end_src
-*** Bindings
-#+begin_src emacs-lisp
-  ;; Movement
-  (evil-global-set-key 'motion "\C-e" 'evil-scroll-up)
-  (evil-global-set-key 'motion "go" 'other-window)
-  (evil-global-set-key 'motion "gp" (lambda () (interactive) (other-window -1)))
+   (evil-global-set-key 'normal " a" 'org-agenda-list)
+   (evil-global-set-key 'normal " e" 'eval-last-sexp)
+   (evil-global-set-key 'visual " e" 'eval-region)
+   (evil-global-set-key 'normal " E" 'my-eval-buffer)
+   (evil-global-set-key 'normal " f" 'find-file)
+   (evil-global-set-key 'normal " g" 'magit-status)
+   (evil-global-set-key 'normal " m" 'run-make)
+   (evil-global-set-key 'normal " s" 'save-buffer)
+   (evil-global-set-key 'normal " k" 'kill-current-buffer)
 
-  ;; Selection
-  (global-set-key (kbd "C-=") 'er/expand-region)
+   ;; Commonly used files and buffers
+   (evil-global-set-key 'motion (kbd "<f2>") (lambda () (interactive) (find-file dot-file)))
+   (evil-global-set-key 'motion (kbd "<f3>") (lambda () (interactive) (find-file emacs-help-file)))
+   (evil-global-set-key 'motion (kbd "<f4>") (lambda () (interactive) (find-file master-help-file)))
 
-  ;; Window magement
-  (evil-global-set-key 'motion "gn" 'winner-undo)
-  (evil-global-set-key 'motion "gm" 'winner-redo)
-
-  ;; Commonly used files and buffers
-  (evil-global-set-key 'motion (kbd "<f2>") (lambda () (interactive) (find-file dot-file)))
-  (evil-global-set-key 'motion (kbd "<f3>") (lambda () (interactive) (find-file emacs-help-file)))
-  (evil-global-set-key 'motion (kbd "<f4>") (lambda () (interactive) (find-file master-help-file)))
-
-  (evil-global-set-key 'motion "gd" (lambda () (interactive) (dired nil)))
-
-  ;; High level
-  (evil-global-set-key 'normal "\\e" 'eval-buffer)
-  (evil-global-set-key 'normal "\\g" 'magit-status)
-  (evil-global-set-key 'normal "\\m" 'run-make)
+   (evil-global-set-key 'motion "gd" (lambda () (interactive) (dired nil)))
  #+end_src 
+*** Movement and selection
+ #+begin_src emacs-lisp
+   (evil-global-set-key 'motion "\C-e" 'evil-scroll-up)
+   (evil-global-set-key 'motion "go" 'other-window)
+   (evil-global-set-key 'motion "gp" (lambda () (interactive) (other-window -1)))
+   (evil-global-set-key 'insert "\C-k" 'previous-line)
+   (evil-global-set-key 'insert "\C-j" 'next-line)
+
+   ;; Selection
+   (global-set-key (kbd "C-=") 'er/expand-region)
+
+ #+end_src 
+*** Window management
+ #+begin_src emacs-lisp
+   (evil-global-set-key 'motion " w " 'wg-switch-to-workgroup)
+   (evil-global-set-key 'motion " ww" 'wg-switch-to-previous-workgroup)
+   (evil-global-set-key 'motion " wc" 'wg-create-workgroup)
+   (evil-global-set-key 'motion " wu" 'wg-update-workgroup)
+   (evil-global-set-key 'motion " wr" 'wg-revert-workgroup)
+
+   (evil-global-set-key 'motion " ws" 'delete-other-windows)
+   (evil-global-set-key 'motion " wd" 'delete-window)
+   (evil-global-set-key 'motion " wD" (lambda () (interactive) (kill-current-buffer) (delete-window)))
+   (evil-global-set-key 'motion " wh" 'split-window-below)
+   (evil-global-set-key 'motion " wv" 'split-window-right)
+
+   (evil-global-set-key 'motion "gn" 'winner-undo)
+   (evil-global-set-key 'motion "gm" 'winner-redo)
+  #+end_src 
 ** Org mode
 *** Helper functions
  #+begin_src emacs-lisp
@@ -348,6 +433,13 @@
    (evil-global-set-key 'normal "gh" 'org-backward-heading-same-level)
    (evil-global-set-key 'normal "gl" 'org-forward-heading-same-level)
    (evil-global-set-key 'normal "gu" 'outline-up-heading)
+   (evil-define-key 'insert org-mode-map (kbd "C-j") 'next-line)
+   (evil-define-key 'insert org-mode-map (kbd "C-k") 'previous-line)
+ #+end_src
+** dired
+*** Bindings
+#+begin_src emacs-lisp
+   (evil-define-key 'normal dired-mode-map (kbd "TAB") 'dired-maybe-insert-subdir)
  #+end_src
 ** Magit
    There is a problem where commiting wont work properly, as a
@@ -375,6 +467,43 @@
     (kbd "d") 'my-peep-mark-for-deletion)
    (add-hook 'peep-dired-hook 'evil-normalize-keymaps)
 #+end_src
+** gnus
+*** helper functions
+    #+begin_src emacs-lisp
+      (defun my-archive-from-inbox ()
+	(interactive)
+	(if (equal (buffer-name) "*Summary INBOX*")
+	    (progn (let ((gnus-novice-user nil))
+			(gnus-summary-delete-article))
+		  (message "Article archived."))))
+
+      (defun my-move-to-thrash ()
+	(interactive)
+	(if (equal (buffer-name) "*Summary INBOX*")
+	    (progn (let ((gnus-novice-user nil))
+			(gnus-summary-move-article :TO-NEWSGROUP "[Gmail]/Thrash"))
+		  (message "Article moved to thrash."))))
+    #+end_src
+*** bindings
+    #+begin_src emacs-lisp
+      (define-key gnus-group-mode-map (kbd "k") 'previous-line)
+      (define-key gnus-group-mode-map (kbd "j") 'next-line)
+      (define-key gnus-group-mode-map (kbd ":") 'evil-ex)
+
+      (define-key gnus-summary-mode-map (kbd "k") 'previous-line)
+      (define-key gnus-summary-mode-map (kbd "j") 'next-line)
+      (define-key gnus-summary-mode-map (kbd ":") 'evil-ex)
+
+      (define-key gnus-summary-mode-map (kbd "m") 'gnus-summary-mark-as-processable)
+      (define-key gnus-summary-mode-map (kbd "u") 'gnus-summary-unmark-as-processable)
+      (define-key gnus-summary-mode-map (kbd "r") 'gnus-summary-rescan-group)
+
+      (define-key gnus-summary-mode-map (kbd "a") 'my-archive-from-inbox)
+      (define-key gnus-summary-mode-map (kbd "d") 'my-move-to-thrash)
+
+      (setq gnus-process-mark ?m)
+    #+end_src
+
 * todos
 *** History
 *** Python
