@@ -30,56 +30,81 @@
   (setq enable-local-variables nil)
 #+end_src 
 * Appearance
-  Set up theme with some customization:
-#+begin_src emacs-lisp
-  (load-theme 'wombat)
-  (custom-theme-set-faces
-   'user
-   '(org-level-1 ((t (:foreground "#40C040" :weight bold))))
-   '(org-level-2 ((t (:foreground "#60C0B0" :weight bold))))
-   '(org-level-3 ((t (:foreground "#60D0FF"))))
-   '(org-level-4 ((t (:foreground "#5070FF"))))
-   '(org-level-5 ((t (:foreground "#B066FF"))))
-   '(org-level-6 ((t (:foreground "#D066C0"))))
-   '(org-level-7 ((t (:foreground "#D08080"))))
-   '(org-level-8 ((t (:foreground "#A04040"))))
-   '(org-list-dt ((t (:foreground "#A0D0E0" :weight bold))))
-   '(org-quote ((t (:foreground "#D8E0A0" :family "Nimbus Sans"))))
-   '(org-block-begin-line ((t (:foreground "#808040"))))
-   '(org-block-end-line ((t (:foreground "#808040"))))
+** Startup
+   Start maximized:
+ #+begin_src emacs-lisp
+   (add-to-list 'default-frame-alist '(fullscreen . maximized))
+ #+end_src
 
-   '(vertical-border ((t (:foreground "#404040" :background "#000000")))))
-#+end_src
+   Other startup stuff
+ #+begin_src emacs-lisp
+   (setq inhibit-startup-message t)
+ #+end_src
+** UI
+   Disable UI stuff:
+ #+begin_src emacs-lisp
+   (menu-bar-mode 0)
+   (tool-bar-mode 0)
+   (scroll-bar-mode 0)
+ #+end_src
+** General
+   Show line numbers.
+   Need to do this selectivly as it causes a crash when opening pdf files.
+ #+begin_src emacs-lisp
+   (add-hook 'prog-mode-hook 'linum-mode)
+   (add-hook 'text-mode-hook 'linum-mode)
+   (add-hook 'org-mode-hook 'linum-mode)
+ #+end_src
 
-  Start maximized:
-#+begin_src emacs-lisp
-  (add-to-list 'default-frame-alist '(fullscreen . maximized))
-#+end_src
+   Show more in the modeline
+ #+begin_src emacs-lisp
+   (column-number-mode 1)
+ #+end_src
+ 
+   Highlight the current line
+ #+begin_src emacs-lisp
+   (global-hl-line-mode 1)
+ #+end_src
+** Theme
+   Set up theme with some customization:
+ #+begin_src emacs-lisp
+   (load-theme 'wombat)
+   (custom-theme-set-faces
+    'user
+    '(default ((t (:foreground "#F6F3E8"))))
 
-  Other startup stuff
-#+begin_src emacs-lisp
-  (setq inhibit-startup-message t)
-#+end_src
+    '(org-level-1 ((t (:foreground "#40C040" :weight bold))))
+    '(org-level-2 ((t (:foreground "#60C0B0" :weight bold))))
+    '(org-level-3 ((t (:foreground "#60D0FF"))))
+    '(org-level-4 ((t (:foreground "#5070FF"))))
+    '(org-level-5 ((t (:foreground "#B066FF"))))
+    '(org-level-6 ((t (:foreground "#D066C0"))))
+    '(org-level-7 ((t (:foreground "#D08080"))))
+    '(org-level-8 ((t (:foreground "#A04040"))))
+    '(org-list-dt ((t (:foreground "#A0D0E0" :weight bold))))
+    '(org-quote ((t (:foreground "#D8E0A0" :family "Nimbus Sans"))))
+    '(org-block-begin-line ((t (:foreground "#808040"))))
+    '(org-block-end-line ((t (:foreground "#808040"))))
 
-  Disable UI stuff:
-#+begin_src emacs-lisp
-  (menu-bar-mode 0)
-  (tool-bar-mode 0)
-  (scroll-bar-mode 0)
-#+end_src
+    '(org-agenda-done ((t (:foreground "#40C040"))))
+    '(org-agenda-date-today ((t (:foreground "#60D0FF" :background "#404040"))))
+    '(org-agenda-date ((t (:foreground "#4ca6cc"))))
+    '(org-scheduled-today ((t (:foreground "#F8F870"))))
+    '(org-scheduled ((t (:foreground "#D8E0A0"))))
+    '(org-upcoming-deadline ((t (:foreground "#F6F3E8"))))
+    '(org-upcoming-distant-deadline ((t (:foreground "#C4C2B9"))))
+    '(org-warning ((t (:foreground "#F04040"))))
+    '(org-agenda-calendar-event ((t (:foreground "#C4C2B9"))))
 
-  Show line numbers.
-  Need to do this selectivly as it causes a crash when opening pdf files.
-#+begin_src emacs-lisp
-  (add-hook 'prog-mode-hook 'linum-mode)
-  (add-hook 'text-mode-hook 'linum-mode)
-  (add-hook 'org-mode-hook 'linum-mode)
-#+end_src
+    '(vertical-border ((t (:foreground "#404040" :background "#000000")))))
 
-  Show more in the modeline
-#+begin_src emacs-lisp
-  (column-number-mode 1)
-#+end_src
+    (set-face-attribute 'hl-line nil :inherit nil :background "#303030")
+
+ #+end_src
+ 
+   To find face under cursor:
+   M-x global-hl-line-mode
+   M-x describe-face
 ** Code related
    Better parentesis display
 #+begin_src emacs-lisp
@@ -105,61 +130,35 @@
   (setq dired-dwim-target t)
 #+end_src
 * Packages
-** Appearance
-*** Diminish
-    Hide modes from the list
- #+begin_src emacs-lisp
-   (use-package diminish
-     :ensure t)
- #+end_src
-*** Doom modeline
-    #+begin_src emacs-lisp
-    (use-package doom-modeline
-    :ensure t
-    :init (doom-modeline-mode 1)
-    :config
-    (doom-modeline-def-segment workspace-name
-    "The current workspace name."
-    (propertize (format " %s " (wg-name (wg-current-workgroup))) 'face
-    (if (doom-modeline--active)
-    'doom-modeline-buffer-major-mode
-    'mode-line-inactive)))
-    :custom ((doom-modeline-height 10)))
-    #+end_src
-*** All the icons
-    #+begin_src emacs-lisp
-      (defun aorst/font-installed-p (font-name)
-	"Check if font with FONT-NAME is available."
-	(if (find-font (font-spec :name font-name))
-	    t
-	  nil))
-      (use-package all-the-icons
-	:config
-	(when (not (aorst/font-installed-p "all-the-icons"))
-	  (all-the-icons-install-fonts t)))
-    #+end_src
-*** Rainbow mode
-    Rainbow mode is nice but do not enable by default
- #+begin_src emacs-lisp
-   (use-package rainbow-mode
-     :ensure t)
- #+end_src
 ** Usability
 *** Evil mode
-
   #+begin_src emacs-lisp
     (use-package evil
       :ensure t
-      :config (evil-mode 1))
+      :config
+      (evil-mode 1))
   #+end_src
-
 **** Additions
      <<evil-mode/additions>>
   #+begin_src emacs-lisp
   (use-package evil-magit
     :ensure t)
   #+end_src
-
+*** General
+    #+begin_src elisp
+    (use-package general
+      :ensure t
+      :config
+      (general-create-definer hanmar/leader-keys
+        :keymaps '(normal insert visual emacs)
+        :prefix "SPC"
+        :global-prefix "C-SPC"))
+    #+end_src
+    
+**** Define key example:
+     (general-define-key
+       "M-x" 'amx
+       "C-s" 'counsil-grep-or-swiper)
 *** Which-key
   #+begin_src emacs-lisp
     (use-package which-key
@@ -253,6 +252,45 @@
      :ensure t
      :config (pcre-mode))
  #+end_src
+** Appearance
+*** Diminish
+    Hide modes from the list
+ #+begin_src emacs-lisp
+   (use-package diminish
+     :ensure t)
+ #+end_src
+*** Doom modeline
+    #+begin_src emacs-lisp
+    (use-package doom-modeline
+    :ensure t
+    :init (doom-modeline-mode 1)
+    :config
+    (doom-modeline-def-segment workspace-name
+    "The current workspace name."
+    (propertize (format " %s " (wg-name (wg-current-workgroup))) 'face
+    (if (doom-modeline--active)
+    'doom-modeline-buffer-major-mode
+    'mode-line-inactive)))
+    :custom ((doom-modeline-height 10)))
+    #+end_src
+*** All the icons
+    #+begin_src emacs-lisp
+      (defun aorst/font-installed-p (font-name)
+	"Check if font with FONT-NAME is available."
+	(if (find-font (font-spec :name font-name))
+	    t
+	  nil))
+      (use-package all-the-icons
+	:config
+	(when (not (aorst/font-installed-p "all-the-icons"))
+	  (all-the-icons-install-fonts t)))
+    #+end_src
+*** Rainbow mode
+    Rainbow mode is nice but do not enable by default
+ #+begin_src emacs-lisp
+   (use-package rainbow-mode
+     :ensure t)
+ #+end_src
 ** Modes
 *** peep-dired
   #+begin_src emacs-lisp
@@ -283,20 +321,32 @@
     #+begin_src emacs-lisp
       (setq org-agenda-files (directory-files-recursively "~/share/personal/" "^[[:alnum:]].*\\.org$"))
       (setq org-agenda-todo-list-sublevels nil)
+
+      (setq org-agenda-skip-deadline-prewarning-if-scheduled t)
+
+      (evil-set-initial-state 'org-agenda-mode 'motion)
     #+end_src
     Setup TODO keywords and their faces
     #+begin_src emacs-lisp
       (setq org-todo-keywords
-	    '((sequence "SDAY(s)" "TODO(t)" "NEXT(n)" "|" "DONE(d)" "CLND(c)")
-              (sequence "|" "WAIT(w)")
-              (sequence "|" "PRIO(p)")
-	      (sequence "NOK(b)" "|" "OK(o)")))
+	    '((sequence "SDAY(s)" "TODO(t)" "NEXT(n)" "|" "DONE(d!)" "CLND(c@)")
+	      (sequence "|" "WAIT(w@)")
+	      (sequence "PRIO(p)" "|")
+	      (sequence "PROJ(P)" "|" "DONE(!)")
+	      (sequence "RECURRING(r)" "|" "DUMMY(u)")
+	      (sequence  "NOK(b)" "|" "PROGRESS(g)" "OK(o)")))
       (setq org-todo-keyword-faces
 	    '(("SDAY" . "cyan")
 	      ("NEXT" . "orange")
 	      ("WAIT" . "yellow")
+	      ("PROJ" . "yellow")
 	      ("PRIO" . (:foreground "red" :bold t))
-	      ("NOK" . (:foreground "red" :bold t))))
+	      ("NOK" . (:foreground "red" :bold t))
+	      ("RECURRING" . "blue")
+	      ("PROGRESS" . "yellow")))
+      (setq org-agenda-custom-commands
+            '(("v" todo "NOK|PROGRESS|OK")))
+      (setq org-log-repeat nil)
     #+end_src
     Setup capture templates
     #+begin_src emacs-lisp
@@ -362,6 +412,10 @@
   (define-key dired-mode-map " " nil)
   (define-key compilation-mode-map "g" nil)
   (define-key compilation-mode-map " " nil)
+  (define-key org-agenda-mode-map " " nil)
+  (define-key org-agenda-mode-map "g" nil)
+  (define-key evil-normal-state-map "gu" nil)
+  (define-key evil-motion-state-map "gk" nil)
 #+end_src
 ** Generic
 *** High level
@@ -373,20 +427,22 @@
  #+end_src
 **** Bindings
  #+begin_src emacs-lisp
-   (evil-global-set-key 'normal " a" 'org-agenda-list)
-   (evil-global-set-key 'normal " e" 'eval-last-sexp)
+   (evil-global-set-key 'motion " a" 'org-agenda-list)
+   (evil-global-set-key 'motion " e" 'eval-last-sexp)
    (evil-global-set-key 'visual " e" 'eval-region)
-   (evil-global-set-key 'normal " E" 'my-eval-buffer)
-   (evil-global-set-key 'normal " f" 'find-file)
-   (evil-global-set-key 'normal " g" 'magit-status)
-   (evil-global-set-key 'normal " m" 'run-make)
-   (evil-global-set-key 'normal " s" 'save-buffer)
-   (evil-global-set-key 'normal " k" 'kill-current-buffer)
+   (evil-global-set-key 'motion " E" 'my-eval-buffer)
+   (evil-global-set-key 'motion " f" 'find-file)
+   (evil-global-set-key 'motion " g" 'magit-status)
+   (evil-global-set-key 'motion " m" 'run-make)
+   (evil-global-set-key 'motion " s" 'save-buffer)
+   (evil-global-set-key 'motion " k" 'kill-current-buffer)
 
    ;; Commonly used files and buffers
    (evil-global-set-key 'motion (kbd "<f2>") (lambda () (interactive) (find-file dot-file)))
    (evil-global-set-key 'motion (kbd "<f3>") (lambda () (interactive) (find-file emacs-help-file)))
    (evil-global-set-key 'motion (kbd "<f4>") (lambda () (interactive) (find-file master-help-file)))
+
+   (evil-global-set-key 'motion (kbd " aa") 'org-agenda-list)
 
    (evil-global-set-key 'motion "gd" (lambda () (interactive) (dired nil)))
  #+end_src 
@@ -446,25 +502,29 @@
 #+end_src
 *** Bindings
 #+begin_src emacs-lisp
-   (evil-global-set-key 'normal "\\be" 'insert-elisp-block)
-   (evil-global-set-key 'normal "gj" 'org-next-visible-heading)
-   (evil-global-set-key 'normal "gk" 'org-previous-visible-heading)
-   (evil-global-set-key 'normal "gh" 'org-backward-heading-same-level)
-   (evil-global-set-key 'normal "gl" 'org-forward-heading-same-level)
-   (evil-global-set-key 'normal "gu" 'outline-up-heading)
-   (evil-define-key 'insert org-mode-map (kbd "C-j") 'next-line)
-   (evil-define-key 'insert org-mode-map (kbd "C-k") 'previous-line)
+  (evil-define-key 'insert 'org-mode-map (kbd "C-j") 'next-line)
+  (evil-define-key 'insert 'org-mode-map (kbd "C-k") 'previous-line)
+  (evil-define-key 'motion 'org-mode-map "gj" 'org-next-visible-heading)
+  (evil-define-key 'motion 'org-mode-map "gk" 'org-previous-visible-heading)
+  (evil-define-key 'motion 'org-mode-map "gh" 'org-backward-heading-same-level)
+  (evil-define-key 'motion 'org-mode-map "gl" 'org-forward-heading-same-level)
+  (evil-define-key 'motion 'org-mode-map "gu" 'outline-up-heading)
  #+end_src
+** Org agenda mode
+   #+begin_src emacs-lisp
+   (evil-define-key 'motion org-agenda-mode-map "h" 'org-agenda-earlier)
+   (evil-define-key 'motion org-agenda-mode-map "l" 'org-agenda-later)
+   #+end_src   
 ** dired
 *** Bindings
 #+begin_src emacs-lisp
-   (evil-define-key 'normal dired-mode-map (kbd "TAB") 'dired-maybe-insert-subdir)
+   (evil-define-key 'motion dired-mode-map (kbd "TAB") 'dired-maybe-insert-subdir)
  #+end_src
 ** Magit
    There is a problem where commiting wont work properly, as a
    workaround restore the following key mapping
 #+begin_src emacs-lisp
-  (evil-global-set-key 'normal "\C-c\C-c" 'with-editor-finish)
+  (evil-global-set-key 'motion "\C-c\C-c" 'with-editor-finish)
 #+end_src
 ** peep-dired
 *** helper functions
@@ -478,7 +538,7 @@
 **** TODO hook to dired-mark function instead of overwriting spererate bindings
 *** bindings
 #+begin_src emacs-lisp
-  (evil-define-key 'normal peep-dired-mode-map (kbd "<SPC>") 'peep-dired-scroll-page-down
+  (evil-define-key 'motion peep-dired-mode-map (kbd "<SPC>") 'peep-dired-scroll-page-down
     (kbd "C-<SPC>") 'peep-dired-scroll-page-up
     (kbd "<backspace>") 'peep-dired-scroll-page-up
     (kbd "j") 'peep-dired-next-file
