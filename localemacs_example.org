@@ -1,0 +1,73 @@
+#+TITLE: Site specific Emacs configuration file
+
+* Paths
+#+begin_src emacs-lisp
+  (defvar emacs-help-file "~/man/emacs.org")
+#+end_src 
+* Startup
+  Show the home folder on startup:
+#+begin_src emacs-lisp
+  (setq initial-buffer-choice "~")
+#+end_src
+* Workgroups
+** config workgroup
+#+begin_src emacs-lisp
+    (defun hanmar/workgroup/conf ()
+      (find-file "~/.emacs.d/")
+      (split-window-right)
+      (find-file "~/.emacs.d/dotemacs.org"))
+
+    (defun hanmar/workgroup/conf/register ()
+  (hanmar/wg-add "conf" 'hanmar/workgroup/conf))
+  (add-hook 'hanmar/wg-setup 'hanmar/workgroup/conf/register)
+#+end_src
+* Config load flags
+#+begin_src emacs-lisp
+  (setq load-dm-tools t)
+#+end_src 
+* Apearance
+  The default font is too small for a high DPI screen:
+#+begin_src emacs-lisp
+  (set-face-attribute 'default nil :font "Source Code Pro" :height 200)
+   
+   (set-face-attribute 'mode-line nil :family "Source Code Pro" :height 180)
+   (set-face-attribute 'mode-line-inactive nil :family "Source Code Pro" :height 180)
+#+end_src
+* Modes
+** Org mode
+       Setup TODO keywords and their faces
+    #+begin_src emacs-lisp
+      (setq org-todo-keywords
+	    '((sequence "SDAY(s)" "TODO(t)" "NEXT(n)" "|" "DONE(d)" "CNLD(c)")
+	      (sequence "WAIT(w)" "|")
+	      (sequence "PRIO(P)" "|")
+	      (sequence "PROJ(p)" "|" "DONE")
+	      (sequence "RECURRING(r)" "|" "DUMMY(u)")
+	      (sequence  "NOK(b)" "|" "PROGRESS(g)" "OK(o)")))
+      (setq org-todo-keyword-faces
+	    '(("SDAY" . "cyan")
+	      ("NEXT" . "orange")
+	      ("WAIT" . "yellow")
+	      ("PROJ" . "yellow")
+	      ("PRIO" . (:foreground "red" :bold t))
+	      ("NOK" . (:foreground "red" :bold t))
+	      ("RECURRING" . "blue")
+	      ("PROGRESS" . "yellow")))
+      (setq org-agenda-custom-commands
+            '(("v" todo "NOK|PROGRESS|OK")))
+      (setq org-log-repeat nil)
+    #+end_src
+    Setup capture templates
+    #+begin_src emacs-lisp
+      (setq org-capture-templates
+	    '(("i" "Inbox" entry (file "~/share/personal/inbox/inbox.org")
+	       "* TODO %?\n  %i\n")))
+    #+end_src
+
+* Custom packages
+  #+begin_src emacs-lisp
+    (load "~/.emacs.d/pkg-gm-tools/gm-tools.el")
+    (load "~/.emacs.d/scm.el")
+  #+end_src
+* Misc
+

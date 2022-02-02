@@ -23,8 +23,48 @@
 #+end_src
   Load local configuration
 #+begin_src emacs-lisp
-(org-dotemacs-load-file nil local-dotemacs-file)
+  (org-dotemacs-load-file nil local-dotemacs-file)
 #+end_src
+* Workgroups
+** workgroups package
+   workgroups2 is not nearly as good as the original so use a local copy of workgroups
+ #+begin_src emacs-lisp
+   (add-to-list 'load-path "~/.emacs.d/manual_download")
+   (require 'workgroups)
+   (setq wg-prefix-key (kbd "C-c w"))
+   (workgroups-mode)
+   (setq wg-morph-on nil)
+   (setq wg-query-for-save-on-emacs-exit nil)
+ #+End_src
+** general
+#+begin_src emacs-lisp
+  (setq hanmar/workgroups (make-hash-table :test 'equal))
+
+  (defun hanmar/wg-add (name function)
+    (setf (gethash name hanmar/workgroups) function))
+
+  (defun hanmar/wg-read-workgroup (&optional noerror)
+    (wg-completing-read "Workgroup: " (hash-table-keys hanmar/workgroups)))
+
+  (defun hanmar/wg-switch (name)
+    (interactive (list (hanmar/wg-read-workgroup)))
+    (message "wg-switch %s" name)
+    (if (wg-get-workgroup 'name name t)
+	(wg-switch-to-workgroup (wg-get-workgroup 'name name t))
+      (hanmar/wg-load name)))
+
+  (defun hanmar/wg-load (name)
+    (message "wg-load %s" name)
+    (wg-create-workgroup name)
+    (delete-other-windows)
+    (message "wg-load2 %s" name)
+    (funcall (gethash name hanmar/workgroups))
+    (message "wg-load3 %s" name)
+    (wg-update-workgroup (wg-get-workgroup 'name name t))
+    (message "wg-load4 %s" name))
+
+   (run-hooks 'hanmar/wg-setup)
+#+end_src 
 * Security
 #+begin_src emacs-lisp
   (setq enable-local-variables nil)
@@ -71,7 +111,7 @@
    (load-theme 'wombat)
    (custom-theme-set-faces
     'user
-    '(default ((t (:foreground "#F6F3E8"))))
+    '(default ((t (:foreground "#F6F3E8" background "#242424"))))
 
     '(org-level-1 ((t (:foreground "#40C040" :weight bold))))
     '(org-level-2 ((t (:foreground "#60C0B0" :weight bold))))
@@ -82,9 +122,9 @@
     '(org-level-7 ((t (:foreground "#D08080"))))
     '(org-level-8 ((t (:foreground "#A04040"))))
     '(org-list-dt ((t (:foreground "#A0D0E0" :weight bold))))
-    '(org-quote ((t (:foreground "#D8E0A0" :family "Nimbus Sans"))))
-    '(org-block-begin-line ((t (:foreground "#808040"))))
-    '(org-block-end-line ((t (:foreground "#808040"))))
+    '(org-quote ((t (:foreground "#D8E0A0"))))
+    '(org-block-begin-line ((t (:foreground "#606030"))))
+    '(org-block-end-line ((t (:foreground "#606030"))))
 
     '(org-agenda-done ((t (:foreground "#40C040"))))
     '(org-agenda-date-today ((t (:foreground "#60D0FF" :background "#404040"))))
@@ -113,11 +153,6 @@
   (setq show-paren-delay 0)
 #+end_src
 * Behaviour
-** Startup
-  Show the home folder on startup:
-#+begin_src emacs-lisp
-  (setq initial-buffer-choice "~")
-#+end_src
 ** indentation
    Do not use tabs for indentation in these files:
 #+begin_src emacs-lisp
@@ -185,19 +220,6 @@
        ([remap describe-variable] . counsel-describe-variable)
        ([remap describe-key] . helpful-key))
    #+end_src
-*** workgroups
-    workgroups2 is not nearly as good as the original so use a local copy of workgroups
-  #+begin_src emacs-lisp
-    (add-to-list 'load-path "~/.emacs.d/manual_download")
-    (require 'workgroups)
-    (setq wg-prefix-key (kbd "C-c w"))
-    (workgroups-mode)
-    (setq wg-morph-on nil)
-    (wg-load "~/.emacs_workgroups")
-    (defun my-save-workgroups ()
-      (wg-save "~/.emacs_workgroups"))
-    (add-hook 'wg-switch-hook 'my-save-workgroups)
-  #+End_src
 *** Winner mode
   #+begin_src emacs-lisp
     (use-package winner
@@ -251,6 +273,11 @@
    (use-package pcre2el
      :ensure t
      :config (pcre-mode))
+ #+end_src
+*** Yafolding
+ #+begin_src emacs-lisp
+   (use-package yafolding
+     :ensure t)
  #+end_src
 ** Appearance
 *** Diminish
@@ -317,6 +344,10 @@
     #+begin_src emacs-lisp
     (setq org-fontify-quote-and-verse-blocks t)
     #+end_src
+    Setup context detail
+    #+begin_src emacs-lisp
+    (push '(tags-tree . local) org-show-context-detail)
+    #+end_src
     Setup agenda mode
     #+begin_src emacs-lisp
       (setq org-agenda-files (directory-files-recursively "~/share/personal/" "^[[:alnum:]].*\\.org$"))
@@ -326,33 +357,19 @@
 
       (evil-set-initial-state 'org-agenda-mode 'motion)
     #+end_src
-    Setup TODO keywords and their faces
+    Setup external programs
     #+begin_src emacs-lisp
-      (setq org-todo-keywords
-	    '((sequence "SDAY(s)" "TODO(t)" "NEXT(n)" "|" "DONE(d!)" "CLND(c@)")
-	      (sequence "|" "WAIT(w@)")
-	      (sequence "PRIO(p)" "|")
-	      (sequence "PROJ(P)" "|" "DONE(!)")
-	      (sequence "RECURRING(r)" "|" "DUMMY(u)")
-	      (sequence  "NOK(b)" "|" "PROGRESS(g)" "OK(o)")))
-      (setq org-todo-keyword-faces
-	    '(("SDAY" . "cyan")
-	      ("NEXT" . "orange")
-	      ("WAIT" . "yellow")
-	      ("PROJ" . "yellow")
-	      ("PRIO" . (:foreground "red" :bold t))
-	      ("NOK" . (:foreground "red" :bold t))
-	      ("RECURRING" . "blue")
-	      ("PROGRESS" . "yellow")))
-      (setq org-agenda-custom-commands
-            '(("v" todo "NOK|PROGRESS|OK")))
-      (setq org-log-repeat nil)
-    #+end_src
-    Setup capture templates
-    #+begin_src emacs-lisp
-      (setq org-capture-templates
-	    '(("i" "Inbox" entry (file "~/share/personal/inbox/inbox.org")
-	       "* TODO %?\n  %i\n")))
+      (defun hanmar-open-pdf-link (FILE LINK)
+	"Handler for pdf links"
+	(let ((page (car (cdr (split-string LINK "::")))))
+	  (progn (hanmar-open-pdf-at-page FILE page)
+		 (message "%s %s" FILE page))))
+      (defun hanmar-open-pdf-at-page (FILE PAGE)
+	"Open a pdf at PAGE."
+	(call-process-shell-command (concat "evince '" FILE "' -p " PAGE " &") nil 0))
+
+      (add-to-list 'org-file-apps '("\\.pdf\\'" . hanmar-open-pdf-link))
+
     #+end_src
 *** Magit
   #+begin_src emacs-lisp
@@ -367,6 +384,14 @@
     (use-package try
       :ensure t)
   #+end_src
+*** Babel
+    #+BEGIN_SRC emacs-lisp
+      (org-babel-do-load-languages
+       'org-babel-load-languages
+       '((python . t)
+         (shell . t)))
+      (setq org-babel-python-command "python3")
+    #+END_SRC
 ** Misc
 *** Aggressive indent mode
  #+begin_src emacs-lisp
@@ -382,27 +407,7 @@
      :init
      (global-flycheck-mode t))
  #+end_src
-* Custom packages
-  #+begin_src emacs-lisp
-    (if (bound-and-true-p load-dm-tools)
-	(load "~/.emacs.d/pkg-gm-tools/gm-tools.el"))
-  #+end_src
 * Misc
-** Dice rolling
-#+begin_src emacs-lisp
-  (defun roll (instr)
-    "Roll dice as give in INSTR."
-    (interactive "s")
-    (message "%s" instr)
-    (cond ((equal (string-trim instr) "1d6")
-	   (message "[1d6]: %d" (+ 1 (random 6))))
-	  ((equal instr "1d10")
-	   (message "[1d6]: %d" (+ 1 (random 10))))
-	  ((equal instr "1d20")
-	   (message "[1d20]: %d" (+ 1 (random 20))))
-	  ((equal instr "1d100")
-	   (message "[1d100]: %d" (+ 1 (random 100))))))
-#+end_src
 * Key bindings
 ** Unmap confilcts
    Some keymaps try to overwrite my nice config, dont let them
@@ -410,6 +415,8 @@
   (evil-global-set-key 'motion " " nil)
   (define-key dired-mode-map "g" nil)
   (define-key dired-mode-map " " nil)
+  (define-key image-mode-map "g" nil)
+  (define-key image-mode-map " " nil)
   (define-key compilation-mode-map "g" nil)
   (define-key compilation-mode-map " " nil)
   (define-key org-agenda-mode-map " " nil)
@@ -455,27 +462,32 @@
    (evil-global-set-key 'insert "\C-j" 'next-line)
 
    ;; Selection
-   (global-set-key (kbd "C-=") 'er/expand-region)
+   (evil-global-set-key 'motion "g+" 'er/expand-region)
 
  #+end_src 
 *** Window management
 **** helper functions
   #+begin_src emacs-lisp
-  (defhydra hanmar/window-scale (:timeout 5)
-    "scale window"
-    ("j" evil-window-decrease-height "- height")
-    ("k" evil-window-increase-height "+ height")
-    ("h" evil-window-decrease-width "- width")
-    ("l" evil-window-increase-width "+ width")
-    ("=" balance-windows "balance" :exit t)
-    ("f" nil "finished" :exit t))
+    (defhydra hanmar/window-scale (:timeout 5)
+      "scale window"
+      ("j" evil-window-decrease-height "- height")
+      ("k" evil-window-increase-height "+ height")
+      ("h" evil-window-decrease-width "- width")
+      ("l" evil-window-increase-width "+ width")
+      ("=" balance-windows "balance" :exit t)
+      ("f" nil "finished" :exit t))
+
+    (defhydra hanmar/update-workgroup (:timeout 10)
+      "update workgroup?"
+      ("y" (lambda () (interactive) (wg-update-workgroup (wg-current-workgroup))) "yes" :exit t)
+      ("n" nil "no" :exit t))
   #+end_src
 **** bindings
   #+begin_src emacs-lisp
-    (evil-global-set-key 'motion " w " 'wg-switch-to-workgroup)
+    (evil-global-set-key 'motion " w " 'hanmar/wg-switch)
     (evil-global-set-key 'motion " ww" 'wg-switch-to-previous-workgroup)
     (evil-global-set-key 'motion " wc" 'wg-create-workgroup)
-    (evil-global-set-key 'motion " wu" 'wg-update-workgroup)
+    (evil-global-set-key 'motion " wu" 'hanmar/update-workgroup/body)
     (evil-global-set-key 'motion " wr" 'wg-revert-workgroup)
 
     (evil-global-set-key 'motion " ws" 'delete-other-windows)
@@ -486,9 +498,35 @@
 
     (evil-global-set-key 'motion " wf" 'hanmar/window-scale/body)
 
-    (evil-global-set-key 'motion "gn" 'winner-undo)
-    (evil-global-set-key 'motion "gm" 'winner-redo)
+    (evil-global-set-key 'motion " wn" 'winner-undo)
+    (evil-global-set-key 'motion " wm" 'winner-redo)
    #+end_src 
+*** Help files
+**** helper functions
+  #+begin_src emacs-lisp
+    (setq help-file-prompt "Help file: ")
+    (setq help-file-path "~/share/personal/notes/")
+
+
+    (defun hanmar/list-help-files ()
+      "List existing help files."
+      (mapcar (lambda (x) (string-remove-suffix ".org" x))
+	      (directory-files help-file-path nil ".*\\.org$")))
+
+    (defun hanmar/open-help-file ()
+      (interactive)
+      (let* ((input (ivy-read help-file-prompt (hanmar/list-help-files))))
+	(find-file (expand-file-name (concat input ".org") help-file-path))))
+  #+end_src
+**** bindings
+  #+begin_src emacs-lisp
+  (evil-global-set-key 'motion " h" 'hanmar/open-help-file)
+  #+end_src
+*** Folding
+  #+begin_src emacs-lisp
+  (evil-define-key 'motion 'python-mode-map (kbd "TAB") 'yafolding-toggle-element)
+  (evil-define-key 'motion 'html-mode-map (kbd "TAB") 'yafolding-toggle-element)
+  #+end_src
 ** Org mode
 *** Helper functions
  #+begin_src emacs-lisp
@@ -509,6 +547,12 @@
   (evil-define-key 'motion 'org-mode-map "gh" 'org-backward-heading-same-level)
   (evil-define-key 'motion 'org-mode-map "gl" 'org-forward-heading-same-level)
   (evil-define-key 'motion 'org-mode-map "gu" 'outline-up-heading)
+
+  (evil-define-key 'motion 'org-mode-map " t" 'org-todo)
+
+  (evil-define-key 'motion 'org-mode-map " os" 'org-store-link)
+  (evil-define-key 'motion 'org-mode-map " oi" 'org-insert-last-stored-link)
+  (evil-define-key 'motion 'org-mode-map " ol" 'org-insert-link)
  #+end_src
 ** Org agenda mode
    #+begin_src emacs-lisp
